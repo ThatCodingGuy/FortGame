@@ -19,13 +19,198 @@ This source file is part of the
 //-------------------------------------------------------------------------------------
 Application::Application(void)
 {
+	m_Blocks = new block_t[WORLD_SIZE * WORLD_SIZE * WORLD_SIZE];
+    memset(m_Blocks, 0, sizeof(block_t) * WORLD_SIZE * WORLD_SIZE * WORLD_SIZE);
+	initWorldBlocksSphere();
+	m_ChunkID = 1;
+
+	initWorldBlocksSphere();
 
 }
 //-------------------------------------------------------------------------------------
 Application::~Application(void)
 {
+    delete[] m_Blocks;
 }
 
+
+void Application::initWorldBlocksSphere (void)
+{
+	for (int z = 0; z < WORLD_SIZE; ++z)
+	{
+		for (int y = 0; y < WORLD_SIZE; ++y)
+		{
+			for (int x = 0; x < WORLD_SIZE; ++x)
+			{
+				if (sqrt((float) (x-WORLD_SIZE/2)*(x-WORLD_SIZE/2) + (y-WORLD_SIZE/2)*(y-WORLD_SIZE/2) + (z-WORLD_SIZE/2)*(z-WORLD_SIZE/2)) < WORLD_SIZE/2) GetBlock(x,y,z) = 1;
+			}
+		}
+	}
+}
+
+void Application::initWorldBlocksRandom (const int Divisor)
+{
+
+
+	for (int z = 0; z < WORLD_SIZE; ++z)
+	{
+		for (int y = 0; y < WORLD_SIZE; ++y)
+		{
+			for (int x = 0; x < WORLD_SIZE; ++x)
+			{
+				GetBlock(x,y,z) = rand() % Divisor;
+			}
+		}
+	}
+
+}
+
+
+void Application::createWorldChunks (void)
+{
+	for (int z = 0; z < WORLD_SIZE; z += CHUNK_SIZE)
+	{
+		for (int y = 0; y < WORLD_SIZE; y += CHUNK_SIZE)
+		{
+			for (int x = 0; x < WORLD_SIZE; x += CHUNK_SIZE)
+			{
+				createChunk(x,y,z);
+			}
+        }
+	}
+}
+
+
+void Application::createChunk (const int StartX, const int StartY, const int StartZ)
+{
+    Ogre::ManualObject* MeshChunk = new Ogre::ManualObject("MeshManChunk" + Ogre::StringConverter::toString(m_ChunkID));
+	MeshChunk->begin("DirtMat");
+
+	int iVertex = 0;
+	block_t Block;
+	block_t Block1;
+
+	for (int z = StartZ; z < CHUNK_SIZE + StartZ; ++z)
+	{
+		for (int y = StartY; y < CHUNK_SIZE + StartY; ++y)
+		{
+			for (int x = StartX; x < CHUNK_SIZE + StartX; ++x)
+			{
+				Block = GetBlock(x,y,z);
+				if (Block == 0) continue;
+
+					//x-1
+				Block1 = 0;
+				if (x > StartX) Block1 = GetBlock(x-1,y,z);
+
+                if (Block1 == 0)
+				{
+					MeshChunk->position(x, y,   z+1);	MeshChunk->normal(-1,0,0);	MeshChunk->textureCoord(0, 1);
+					MeshChunk->position(x, y+1, z+1);	MeshChunk->normal(-1,0,0);	MeshChunk->textureCoord(1, 1);
+					MeshChunk->position(x, y+1, z);		MeshChunk->normal(-1,0,0);	MeshChunk->textureCoord(1, 0);
+					MeshChunk->position(x, y,   z);		MeshChunk->normal(-1,0,0);	MeshChunk->textureCoord(0, 0);
+
+					MeshChunk->triangle(iVertex, iVertex+1, iVertex+2);
+					MeshChunk->triangle(iVertex+2, iVertex+3, iVertex);
+
+					iVertex += 4;
+				}
+
+					//x+1
+				Block1 = 0;
+				if (x < StartX + CHUNK_SIZE - 1) Block1 = GetBlock(x+1,y,z);
+
+				if (Block1 == 0)
+				{
+					MeshChunk->position(x+1, y,   z);	MeshChunk->normal(1,0,0); MeshChunk->textureCoord(0, 1);
+					MeshChunk->position(x+1, y+1, z);	MeshChunk->normal(1,0,0); MeshChunk->textureCoord(1, 1);
+					MeshChunk->position(x+1, y+1, z+1);	MeshChunk->normal(1,0,0); MeshChunk->textureCoord(1, 0);
+					MeshChunk->position(x+1, y,   z+1);	MeshChunk->normal(1,0,0); MeshChunk->textureCoord(0, 0);
+
+					MeshChunk->triangle(iVertex, iVertex+1, iVertex+2);
+					MeshChunk->triangle(iVertex+2, iVertex+3, iVertex);
+
+					iVertex += 4;
+				}
+
+					//y-1
+				Block1 = 0;
+				if (y > StartY) Block1 = GetBlock(x,y-1,z);
+
+				if (Block1 == 0)
+				{
+					MeshChunk->position(x,   y, z);		MeshChunk->normal(0,-1,0); MeshChunk->textureCoord(0, 1);
+					MeshChunk->position(x+1, y, z);		MeshChunk->normal(0,-1,0); MeshChunk->textureCoord(1, 1);
+					MeshChunk->position(x+1, y, z+1);	MeshChunk->normal(0,-1,0); MeshChunk->textureCoord(1, 0);
+					MeshChunk->position(x,   y, z+1);	MeshChunk->normal(0,-1,0); MeshChunk->textureCoord(0, 0);
+
+					MeshChunk->triangle(iVertex, iVertex+1, iVertex+2);
+					MeshChunk->triangle(iVertex+2, iVertex+3, iVertex);
+
+					iVertex += 4;
+				}
+
+
+					//y+1
+				Block1 = 0;
+				if (y < StartY + CHUNK_SIZE - 1) Block1 = GetBlock(x,y+1,z);
+
+				if (Block1 == 0)
+				{
+					MeshChunk->position(x,   y+1, z+1);		MeshChunk->normal(0,1,0); MeshChunk->textureCoord(0, 1);
+					MeshChunk->position(x+1, y+1, z+1);		MeshChunk->normal(0,1,0); MeshChunk->textureCoord(1, 1);
+					MeshChunk->position(x+1, y+1, z);		MeshChunk->normal(0,1,0); MeshChunk->textureCoord(1, 0);
+					MeshChunk->position(x,   y+1, z);		MeshChunk->normal(0,1,0); MeshChunk->textureCoord(0, 0);
+
+					MeshChunk->triangle(iVertex, iVertex+1, iVertex+2);
+					MeshChunk->triangle(iVertex+2, iVertex+3, iVertex);
+
+					iVertex += 4;
+				}
+
+					//z-1
+				Block1 = 0;
+				if (z > StartZ) Block1 = GetBlock(x,y,z-1);
+
+				if (Block1 == 0)
+				{
+					MeshChunk->position(x,   y+1, z);		MeshChunk->normal(0,0,-1); MeshChunk->textureCoord(0, 1);
+					MeshChunk->position(x+1, y+1, z);		MeshChunk->normal(0,0,-1); MeshChunk->textureCoord(1, 1);
+					MeshChunk->position(x+1, y,   z);		MeshChunk->normal(0,0,-1); MeshChunk->textureCoord(1, 0);
+					MeshChunk->position(x,   y,   z);		MeshChunk->normal(0,0,-1); MeshChunk->textureCoord(0, 0);
+
+					MeshChunk->triangle(iVertex, iVertex+1, iVertex+2);
+					MeshChunk->triangle(iVertex+2, iVertex+3, iVertex);
+
+					iVertex += 4;
+				}
+
+
+					//z+1
+				Block1 = 0;
+				if (z < StartZ + CHUNK_SIZE - 1) Block1 = GetBlock(x,y,z+1);
+
+				if (Block1 == 0)
+				{
+					MeshChunk->position(x,   y,   z+1);		MeshChunk->normal(0,0,1); MeshChunk->textureCoord(0, 1);
+					MeshChunk->position(x+1, y,   z+1);		MeshChunk->normal(0,0,1); MeshChunk->textureCoord(1, 1);
+					MeshChunk->position(x+1, y+1, z+1);		MeshChunk->normal(0,0,1); MeshChunk->textureCoord(1, 0);
+					MeshChunk->position(x,   y+1, z+1);		MeshChunk->normal(0,0,1); MeshChunk->textureCoord(0, 0);
+
+					MeshChunk->triangle(iVertex, iVertex+1, iVertex+2);
+					MeshChunk->triangle(iVertex+2, iVertex+3, iVertex);
+
+					iVertex += 4;
+				}
+			}
+		}
+	}
+
+	MeshChunk->end();
+	mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(MeshChunk);
+
+	++m_ChunkID;
+}
 
 Ogre::ManualObject* Application::createCubeMesh(Ogre::String meshName, Ogre::String matName) {
      Ogre::ManualObject* cube = mSceneMgr->createManualObject(meshName);
@@ -64,15 +249,9 @@ Ogre::ManualObject* Application::createCubeMesh(Ogre::String meshName, Ogre::Str
     return cube;
     }
 
-//-------------------------------------------------------------------------------------
-void Application::createScene(void)
-{
-    // Set the scene's ambient light
-    mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5f, 0.5f, 0.5f));
 
-
-    Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().create("DirtMat", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-	Ogre::TextureUnitState* tuisTexture = mat->getTechnique(0)->getPass(0)->createTextureUnitState("dirt_texture.JPG");
+//Old shitty method of drawing
+void Application::displaySimpleWorld (void) {
 
 
 
@@ -88,24 +267,60 @@ void Application::createScene(void)
 
 
     //Create out solid block world
-	for (int z = 0; z < 256; ++z)
+	for (int z = 0; z < WORLD_SIZE; ++z)
 	{
-		for (int y = 0; y < 3; ++y)
+		for (int y = 0; y < WORLD_SIZE; ++y)
 		{
-			for (int x = 0; x < 256; ++x)
+			for (int x = 0; x < WORLD_SIZE; ++x)
 			{
-				pGeom->addEntity(pEnt, Ogre::Vector3(x,y,z));
+				if (GetBlock(x,y,z)) pGeom->addEntity(pEnt, Ogre::Vector3(x,y,z));
 			}
 		}
 	}
 
 	pGeom->build ();
+}
 
+void Application::createPlayer(void)
+{
+    // Create an Entity
+    Ogre::Entity* ogreHead = mSceneMgr->createEntity("Player", "ogrehead.mesh");
+
+    // Create a SceneNode and attach the Entity to it
+    Ogre::SceneNode* playerNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("PlayerNode");
+    playerNode->attachObject(ogreHead);
+    playerNode->scale( .1, .1, .1 );
+
+    Ogre::SceneNode* playerCamNode = playerNode->createChildSceneNode("PlayerCamNode");
+
+    Ogre::Camera* playerCam = mSceneMgr->createCamera("PlayerCam");
+    playerCamNode->attachObject(playerCam);
+    playerCamNode->translate(Ogre::Vector3(0,0,-400));
+    playerCam->lookAt(playerNode->getPosition());
+    playerCam->setNearClipDistance(5);
+}
+
+void Application::createPlayerCamera(void)
+{
+
+
+}
+
+//-------------------------------------------------------------------------------------
+void Application::createScene(void)
+{
+    // Set the scene's ambient light
+    mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5f, 0.5f, 0.5f));
+
+
+    createWorldChunks();
+    createPlayer();
+    //displaySimpleWorld();
 
     // Create a Light and set its position
     Ogre::Light* light = mSceneMgr->createLight("MainLight");
 
-    mSceneMgr->setSkyDome(true, "Examples/CloudySky", 5, 8);
+    mSceneMgr->setSkyBox(true, "Examples/SpaceSkyBox");
     light->setPosition(20.0f, 80.0f, 50.0f);
 }
 

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<ActiveTarget name="Debug" />
+	<File name="BlockType.h" open="1" top="0" tabpos="4">
+		<Cursor position="156" topLine="0" />
+	</File>
+	<File name="Consts.h" open="0" top="0" tabpos="0">
+		<Cursor position="67" topLine="0" />
+	</File>
+	<File name="OgreInit.cpp" open="0" top="0" tabpos="0">
+		<Cursor position="638" topLine="31" />
+	</File>
+	<File name="OgreInit.h" open="0" top="0" tabpos="0">
+		<Cursor position="342" topLine="0" />
+	</File>
+	<File name="VoxelCube.cpp" open="1" top="1" tabpos="3">
+		<Cursor position="1231" topLine="0" />
+	</File>
+	<File name="VoxelCube.h" open="1" top="0" tabpos="2">
+		<Cursor position="380" topLine="0" />
+	</File>
+	<File name="main.cpp" open="1" top="0" tabpos="1">
+		<Cursor position="703" topLine="8" />
+	</File>
+</CodeBlocks_layout_file>

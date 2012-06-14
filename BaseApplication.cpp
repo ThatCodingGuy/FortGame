@@ -60,6 +60,11 @@ bool BaseApplication::configure(void)
     lRgMgr.initialiseResourceGroup(lNameOfResourceGroup);
     lRgMgr.loadResourceGroup(lNameOfResourceGroup);
 
+
+
+
+
+
     // Show the configuration dialog and initialise the system
     // You can skip this and use root.restoreConfig() to load configuration
     // settings if you were sure there are valid ones saved in ogre.cfg
@@ -86,7 +91,7 @@ void BaseApplication::chooseSceneManager(void)
 void BaseApplication::createCamera(void)
 {
     // Create the camera
-    mCamera = mSceneMgr->createCamera("PlayerCam");
+    mCamera = mSceneMgr->createCamera("FlyCam");
 
     // Position it at 500 in Z direction
     mCamera->setPosition(Ogre::Vector3(0,0,80));
@@ -187,6 +192,7 @@ void BaseApplication::setupResources(void)
                 archName, typeName, secName);
         }
     }
+
 }
 //-------------------------------------------------------------------------------------
 void BaseApplication::createResourceListener(void)
@@ -197,6 +203,9 @@ void BaseApplication::createResourceListener(void)
 void BaseApplication::loadResources(void)
 {
     Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+
+    Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().create("DirtMat", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+	Ogre::TextureUnitState* tuisTexture = mat->getTechnique(0)->getPass(0)->createTextureUnitState("dirt_texture.JPG");
 }
 //-------------------------------------------------------------------------------------
 void BaseApplication::go(void)
@@ -212,7 +221,10 @@ void BaseApplication::go(void)
     if (!setup())
         return;
 
-    mRoot->startRendering();
+    while (!mShutDown) {
+        mRoot->renderOneFrame();
+
+    }
 
     // clean up
     destroyScene();
@@ -283,84 +295,7 @@ bool BaseApplication::keyPressed( const OIS::KeyEvent &arg )
 {
     if (mTrayMgr->isDialogVisible()) return true;   // don't process any more keys if dialog is up
 
-    if (arg.key == OIS::KC_F)   // toggle visibility of advanced frame stats
-    {
-        mTrayMgr->toggleAdvancedFrameStats();
-    }
-    else if (arg.key == OIS::KC_G)   // toggle visibility of even rarer debugging details
-    {
-        if (mDetailsPanel->getTrayLocation() == OgreBites::TL_NONE)
-        {
-            mTrayMgr->moveWidgetToTray(mDetailsPanel, OgreBites::TL_TOPRIGHT, 0);
-            mDetailsPanel->show();
-        }
-        else
-        {
-            mTrayMgr->removeWidgetFromTray(mDetailsPanel);
-            mDetailsPanel->hide();
-        }
-    }
-    else if (arg.key == OIS::KC_T)   // cycle polygon rendering mode
-    {
-        Ogre::String newVal;
-        Ogre::TextureFilterOptions tfo;
-        unsigned int aniso;
-
-        switch (mDetailsPanel->getParamValue(9).asUTF8()[0])
-        {
-        case 'B':
-            newVal = "Trilinear";
-            tfo = Ogre::TFO_TRILINEAR;
-            aniso = 1;
-            break;
-        case 'T':
-            newVal = "Anisotropic";
-            tfo = Ogre::TFO_ANISOTROPIC;
-            aniso = 8;
-            break;
-        case 'A':
-            newVal = "None";
-            tfo = Ogre::TFO_NONE;
-            aniso = 1;
-            break;
-        default:
-            newVal = "Bilinear";
-            tfo = Ogre::TFO_BILINEAR;
-            aniso = 1;
-        }
-
-        Ogre::MaterialManager::getSingleton().setDefaultTextureFiltering(tfo);
-        Ogre::MaterialManager::getSingleton().setDefaultAnisotropy(aniso);
-        mDetailsPanel->setParamValue(9, newVal);
-    }
-    else if (arg.key == OIS::KC_R)   // cycle polygon rendering mode
-    {
-        Ogre::String newVal;
-        Ogre::PolygonMode pm;
-
-        switch (mCamera->getPolygonMode())
-        {
-        case Ogre::PM_SOLID:
-            newVal = "Wireframe";
-            pm = Ogre::PM_WIREFRAME;
-            break;
-        case Ogre::PM_WIREFRAME:
-            newVal = "Points";
-            pm = Ogre::PM_POINTS;
-            break;
-        default:
-            newVal = "Solid";
-            pm = Ogre::PM_SOLID;
-        }
-
-        mCamera->setPolygonMode(pm);
-        mDetailsPanel->setParamValue(10, newVal);
-    }
-    else if(arg.key == OIS::KC_F5)   // refresh all textures
-    {
-        Ogre::TextureManager::getSingleton().reloadAll();
-    }
-    else if (arg.key == OIS::KC_SYSRQ)   // take a screenshot
+    if (arg.key == OIS::KC_SYSRQ)   // take a screenshot
     {
         mWindow->writeContentsToTimestampedFile("screenshot", ".jpg");
     }
@@ -368,6 +303,34 @@ bool BaseApplication::keyPressed( const OIS::KeyEvent &arg )
     {
         mShutDown = true;
     }
+    else if (arg.key == OIS::KC_F)
+    {
+        std::cout << "CHANGING TO FLYCAM" << std::endl;
+        mWindow->getViewport(0)->setCamera(mSceneMgr->getCamera("FlyCam"));
+    }
+    else if (arg.key == OIS::KC_P)
+    {
+        std::cout << "CHANGING TO PLAYERCAM" << std::endl;
+        mWindow->getViewport(0)->setCamera(mSceneMgr->getCamera("PlayerCam"));
+    }
+    else if (arg.key == OIS::KC_W)
+    {
+        mSceneMgr->getEntity("Player")->getParentSceneNode()->translate(Ogre::Vector3(0,0,100));
+    }
+    else if (arg.key == OIS::KC_A)
+    {
+
+    }
+    else if (arg.key == OIS::KC_S)
+    {
+
+    }
+    else if (arg.key == OIS::KC_D)
+    {
+
+    }
+
+
 
     mCameraMan->injectKeyDown(arg);
     return true;
